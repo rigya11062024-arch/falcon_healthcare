@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clinic Pro System</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;font-family:Poppins;background:#0f172a;color:#fff}
+.container{max-width:1100px;margin:auto;padding:20px}
+.card{background:#1e293b;padding:20px;border-radius:16px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.day{padding:10px;background:#334155;border-radius:8px;text-align:center;cursor:pointer}
+.day.active{background:#22c55e;color:#000}
+.slot{padding:10px;background:#475569;border-radius:8px;text-align:center;cursor:pointer}
+.slot.active{background:#22c55e;color:#000}
+.slot.disabled{background:#ef4444;cursor:not-allowed}
+input,select,button{width:100%;padding:10px;margin-top:10px;border-radius:8px;border:none}
+button{background:#22c55e;font-weight:600;cursor:pointer}
+.clinic-header{
+  background: linear-gradient(135deg,#22c55e,#4ade80);
+  padding: 30px 20px;
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.clinic-header h1{
+  margin: 0;
+  font-size: 28px;
+  color: #000;
+  font-weight: 600;
+}
+
+.clinic-header p{
+  margin-top: 5px;
+  font-size: 14px;
+  color: #064e3b;
+}
+.clinic-header{
+  backdrop-filter: blur(10px);
+}
+.step-box{
+  display:none;
+  opacity:0;
+  transform:translateX(40px);
+  transition:all 0.4s ease;
+}
+
+.step-box.active{
+  display:block;
+  opacity:1;
+  transform:translateX(0);
+}
+
+.progress{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:20px;
+}
+
+.step{
+  width:35px;
+  height:35px;
+  border-radius:50%;
+  background:#334155;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.step.active{
+  background:#22c55e;
+  color:#000;
+}
+
+.close-btn{
+  position:absolute;   /* or fixed if you want floating */
+  top:15px;
+  right:20px;
+
+  width:35px;
+  height:35px;
+
+  background:#ef4444;
+  color:#fff;
+
+  border:none;
+  border-radius:50%;
+
+  font-size:18px;
+  font-weight:bold;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  transition:0.3s;
+
+  z-index:1000;
+}
+</style>
+</head>
+<body>
+<button class="close-btn" onclick="goHome()">✖</button>
+<header class="clinic-header">
+  <div class="clinic-info">
+<h1>🦅 Falcon Healthcare</h1>
+<p>Healing Hands • Caring Hearts</p>
+  </div>
+</header>
+<div class="container">
+
+<div class="grid">
+
+<div class="card">
+<h3>Book Appointment</h3>
+<input id="name" placeholder="Name">
+<input id="phone" placeholder="Phone">
+
+<select id="doctor" onchange="loadSlots()">
+<option value="">Select Doctor</option>
+<option value="Dr. Faheem Rahman">Dr. Faheem Rahman (General Physician)</option>
+<option value="Dr. Yogathipathy">Dr. Yogathipathy (Cardiologist)</option>
+<option value="Dr. Chaya Nair">Dr. Chaya Nair (Pediatrician)</option>
+<option value="Dr. Saritha">Dr. Saritha (Gynecologist)</option>
+<option value="Dr. Dilip Kumar">Dr. Dilip Kumar (Dermatologist)</option>
+<option value="Dr. Swarna">Dr. Swarna (Nephrologist)</option>
+
+</select>
+
+<h4>Select Date</h4>
+<div id="calendar" class="calendar"></div>
+
+<h4>Select Time</h4>
+<div id="slots" class="calendar"></div>
+
+<button onclick="book()">Confirm Booking</button>
+</div>
+
+
+
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBFIixlBvuXCLBv4PbtY-JmWKkD-CwKfcs",
+  authDomain: "your-clinic-52542.firebaseapp.com",
+  projectId: "your-clinic-52542"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let selectedDate="";
+let selectedSlot="";
+
+const schedule={
+"Dr. Faheem Rahman":["10:00","11:00","12:00"],
+"Dr. Yogathipathy":["14:00","15:00","16:00"],
+"Dr. Chaya Nair":["10:00","11:00","12:00"],
+"Dr. Saritha":["14:00","15:00","16:00"],
+"Dr. Dilip Kumar":["10:00","11:00","12:00"],
+"Dr. Swarna":["14:00","15:00","16:00"]
+};
+
+// CALENDAR (30 days)
+const calendar=document.getElementById("calendar");
+for(let i=0;i<30;i++){
+  const d=new Date();
+  d.setDate(d.getDate()+i);
+  const formatted=d.toISOString().split('T')[0];
+
+  const div=document.createElement("div");
+  div.className="day";
+  div.innerText=d.getDate();
+
+  div.onclick=()=>{
+    document.querySelectorAll('.day').forEach(x=>x.classList.remove('active'));
+    div.classList.add('active');
+    selectedDate=formatted;
+    loadSlots();
+  }
+
+  calendar.appendChild(div);
+}
+
+// LOAD SLOTS
+window.loadSlots = async () => {
+  const doctor = document.getElementById("doctor").value;
+  const slotsEl = document.getElementById("slots");
+
+  if (!doctor || !selectedDate) return;
+
+  slotsEl.innerHTML = "";
+  selectedSlot = "";
+
+  console.log("Checking for:", doctor, selectedDate);
+
+  // 🔥 Fetch booked slots
+  const q = query(
+    collection(db, "appointments"),
+    where("doctor", "==", doctor),
+    where("date", "==", selectedDate)
+  );
+
+  const snap = await getDocs(q);
+
+  let booked = [];
+
+  snap.forEach(doc => {
+    const data = doc.data();
+    console.log("Booked slot:", data.time);
+    booked.push(data.time);
+  });
+
+  console.log("All booked slots:", booked);
+
+  const times = schedule[doctor] || [];
+
+  times.forEach(time => {
+    const div = document.createElement("div");
+    div.className = "slot";
+    div.innerText = time;
+
+    // 🔴 Disable booked slot
+    if (booked.includes(time)) {
+      div.classList.add("disabled");
+    } else {
+      div.onclick = () => {
+        document.querySelectorAll(".slot").forEach(s => s.classList.remove("active"));
+        div.classList.add("active");
+        selectedSlot = time;
+      };
+    }
+
+    slotsEl.appendChild(div);
+  });
+};
+// BOOK
+window.book = async () => {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const doctor = document.getElementById("doctor").value;
+
+  console.log("Booking Data:", {
+    name, phone, doctor, selectedDate, selectedSlot
+  });
+
+  // ✅ Validation
+  if (!name || !phone || !doctor || !selectedDate || !selectedSlot) {
+    alert("Please fill all fields and select a slot");
+    return;
+  }
+
+  try {
+    console.log("Saving to Firebase...");
+
+    // ✅ Save to Firebase
+    await addDoc(collection(db, "appointments"), {
+      name,
+      phone,
+      doctor,
+      date: selectedDate,
+      time: selectedSlot,
+      createdAt: new Date()
+    });
+
+    console.log("✅ Saved successfully");
+
+    // ✅ WhatsApp Message
+    const cleanPhone = phone.replace(/\D/g, '');
+    const msg = `Appointment Confirmed\n\nName: ${name}\nDoctor: ${doctor}\nDate: ${selectedDate}\nTime: ${selectedSlot}`;
+
+    window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`);
+
+    // ✅ Success Alert
+    alert("✅ Appointment Booked Successfully!");
+
+    // ✅ Reset selection
+    selectedSlot = "";
+
+    // ✅ Refresh slots (to disable booked one)
+    setTimeout(() => {
+      loadSlots();
+    }, 500);
+
+  } catch (error) {
+    console.error("❌ Booking Error:", error);
+    alert("Error booking appointment. Check console.");
+  }
+};
+
+function nextStep(step){
+  document.querySelectorAll(".step-box").forEach(s=>s.classList.remove("active"));
+  document.getElementById("step"+step).classList.add("active");
+
+  document.querySelectorAll(".step").forEach((s,i)=>{
+    s.classList.toggle("active", i < step);
+  });
+}
+
+// ADMIN REALTIME
+onSnapshot(collection(db,"appointments"),(snap)=>{
+  adminList.innerHTML="";
+  snap.forEach(doc=>{
+    const a=doc.data();
+    adminList.innerHTML+=`<div class='card'>${a.name} | ${a.doctor} | ${a.date} ${a.time}</div>`;
+  });
+});
+
+window.goHome = () => {
+  document.body.style.opacity = "0";
+  setTimeout(()=>{
+    window.location.href = "index.html";
+  },300);
+};
+</script>
+
+</body>
+</html>

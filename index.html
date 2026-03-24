@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Falcon Healthcare</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Poppins}
+
+body{
+  background:#0f172a;
+  color:#fff;
+}
+
+/* NAVBAR */
+nav{
+  display:flex;
+  justify-content:space-between;
+  padding:20px 50px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(10px);
+}
+
+nav h2{
+  color:#22c55e;
+}
+
+nav a{
+  color:#fff;
+  text-decoration:none;
+  margin-left:20px;
+}
+
+/* HERO */
+.hero{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:80px 50px;
+}
+
+.hero-text h1{
+  font-size:48px;
+}
+
+.hero-text span{
+  color:#22c55e;
+}
+
+.hero p{
+  margin-top:10px;
+  color:#94a3b8;
+}
+
+.btn{
+  margin-top:20px;
+  display:inline-block;
+  padding:14px 28px;
+  background:#22c55e;
+  color:#000;
+  border-radius:10px;
+  text-decoration:none;
+  font-weight:600;
+  transition:0.3s;
+}
+
+.btn:hover{
+  transform:scale(1.05);
+}
+
+/* DOCTORS */
+.section{
+  padding:60px 50px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:#1e293b;
+  padding:20px;
+  border-radius:16px;
+  transition:0.3s;
+}
+
+.card:hover{
+  transform:translateY(-10px);
+}
+
+.card h3{
+  color:#22c55e;
+}
+
+/* FOOTER */
+footer{
+  text-align:center;
+  padding:20px;
+  background:#020617;
+  color:#94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<nav>
+  <h2>🦅 Falcon Healthcare</h2>
+  <div>
+    <a href="#">Home</a>
+    <a href="#doctors">Doctors</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>Healing Hands,<br><span>Caring Hearts</span></h1>
+    <p>Advanced healthcare with trusted specialists</p>
+
+    <!-- 🔥 BUTTON -->
+    <a href="booking.html" class="btn">Book Appointment</a>
+  </div>
+</section>
+
+<!-- DOCTORS -->
+<section class="section" id="doctors">
+  <h1>Our Specialists</h1>
+
+  <div class="grid">
+
+    <div class="card">
+      <h3>Dr. Faheem Rahman</h3>
+      <p>General Physician</p>
+    </div>
+
+    <div class="card">
+      <h3>Dr. Yogathipathy</h3>
+      <p>Cardiologist</p>
+    </div>
+
+    <div class="card">
+      <h3>Dr. Chaya Nair</h3>
+      <p>Pediatrician</p>
+    </div>
+
+    <div class="card">
+      <h3>Dr. Saritha</h3>
+      <p>Gynecologist</p>
+    </div>
+
+    <div class="card">
+      <h3>Dr. Dilip Kumar</h3>
+      <p>Dermatologist</p>
+    </div>
+
+    <div class="card">
+      <h3>Dr. Swarna</h3>
+      <p>Nephrologist</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="section" id="contact">
+  <h2>Contact Us</h2>
+  <p>📍 Golden Palms Rd, Kothanur, Bengaluru, Karnataka 560077</p>
+  <p>📞 +91 94823 46274</p>
+</section>
+
+<footer>
+  © 2026 Falcon Healthcare
+</footer>
+
+</body>
+</html>

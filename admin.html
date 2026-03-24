@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Clinic Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;font-family:Poppins;background:#0f172a;color:#fff}
+.header{padding:20px;background:linear-gradient(135deg,#22c55e,#4ade80);color:#000;text-align:center}
+.container{max-width:900px;margin:auto;padding:20px}
+.card{background:#1e293b;padding:20px;border-radius:16px;margin-bottom:20px}
+.flex{display:flex;justify-content:space-between;align-items:center}
+button{padding:8px 12px;border:none;border-radius:8px;background:#22c55e;color:#000;cursor:pointer}
+input{padding:10px;border-radius:8px;border:none;width:100%;margin-top:10px}
+.hidden{display:none}
+.logout{background:#ef4444;color:#fff}
+table {
+  background: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+td, th {
+  padding: 12px;
+}
+.hidden {
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<div class="header">🏥 Secure Admin Panel</div>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="loginBox" class="card">
+<h3>Admin Login</h3>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="adminPanel" class="hidden">
+
+<div class="card flex">
+<h3>Bookings</h3>
+<button class="logout" onclick="logout()">Logout</button>
+</div>
+<div class="card flex" style="gap:10px;flex-wrap:wrap;">
+  
+  <!-- Filter by Doctor -->
+  <select id="filterDoctor" onchange="applyFilters()">
+    <option value="">All Doctors</option>
+<option value="Dr. Faheem Rahman">Dr. Faheem Rahman (General Physician)</option>
+<option value="Dr. Yogathipathy">Dr. Yogathipathy (Cardiologist)</option>
+<option value="Dr. Chaya Nair">Dr. Chaya Nair (Pediatrician)</option>
+<option value="Dr. Saritha">Dr. Saritha (Gynecologist)</option>
+<option value="Dr. Dilip Kumar">Dr. Dilip Kumar (Dermatologist)</option>
+<option value="Dr. Swarna">Dr. Swarna (Nephrologist)</option>
+  </select>
+
+  <!-- Sort -->
+  <select id="sortDate" onchange="applyFilters()">
+    <option value="">Sort by Date</option>
+    <option value="asc">Oldest First</option>
+    <option value="desc">Newest First</option>
+  </select>
+
+  <!-- Add Patient -->
+  <button onclick="toggleForm()">➕ Add Patient</button>
+
+</div>
+
+<!-- Add Patient Form -->
+<div id="addForm" class="card hidden">
+  <h3>Add New Patient</h3>
+  <input id="newName" placeholder="Name">
+  <input id="newPhone" placeholder="Phone">
+
+  <select id="newDoctor">
+<option value="Dr. Faheem Rahman">Dr. Faheem Rahman (General Physician)</option>
+<option value="Dr. Yogathipathy">Dr. Yogathipathy (Cardiologist)</option>
+<option value="Dr. Chaya Nair">Dr. Chaya Nair (Pediatrician)</option>
+<option value="Dr. Saritha">Dr. Saritha (Gynecologist)</option>
+<option value="Dr. Dilip Kumar">Dr. Dilip Kumar (Dermatologist)</option>
+<option value="Dr. Swarna">Dr. Swarna (Nephrologist)</option>
+  </select>
+
+  <input type="date" id="newDate">
+  <input type="time" id="newTime">
+
+  <button onclick="addPatient()">Save</button>
+</div>
+<div id="bookingList"></div>
+
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyBFIixlBvuXCLBv4PbtY-JmWKkD-CwKfcs",
+  authDomain: "your-clinic-52542.firebaseapp.com",
+  projectId: "your-clinic-52542"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let allBookings = [];
+
+// LOGIN
+window.login = async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("Login Successful");
+  } catch (err) {
+    alert("Login Failed");
+    console.error(err);
+  }
+};
+
+// LOGOUT
+window.logout = async () => {
+  await signOut(auth);
+};
+
+window.toggleForm = () => {
+  document.getElementById("addForm").classList.toggle("hidden");
+};
+// AUTH STATE
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("adminPanel").classList.remove("hidden");
+    loadBookings();
+  } else {
+    document.getElementById("loginBox").classList.remove("hidden");
+    document.getElementById("adminPanel").classList.add("hidden");
+  }
+});
+
+// LOAD BOOKINGS
+function loadBookings(){
+  onSnapshot(collection(db, "appointments"), (snap) => {
+    allBookings = [];
+    snap.forEach(docSnap => {
+      allBookings.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    renderBookings(allBookings);
+  });
+}
+
+
+window.applyFilters = () => {
+  let filtered = [...allBookings];
+
+  const doctor = document.getElementById("filterDoctor").value;
+  const sort = document.getElementById("sortDate").value;
+
+  // Filter
+  if (doctor) {
+    filtered = filtered.filter(b => b.doctor === doctor);
+  }
+
+  // Sort
+  if (sort === "asc") {
+    filtered.sort((a, b) => a.date.localeCompare(b.date));
+  } else if (sort === "desc") {
+    filtered.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  renderBookings(filtered);
+};
+
+window.addPatient = async () => {
+  const name = document.getElementById("newName").value;
+  const phone = document.getElementById("newPhone").value;
+  const doctor = document.getElementById("newDoctor").value;
+  const date = document.getElementById("newDate").value;
+  const time = document.getElementById("newTime").value;
+
+  if (!name || !phone || !doctor || !date || !time) {
+    alert("Fill all fields");
+    return;
+  }
+
+  await addDoc(collection(db, "appointments"), {
+    name,
+    phone,
+    doctor,
+    date,
+    time
+  });
+
+  alert("Patient Added Successfully");
+
+  // Reset form
+  document.getElementById("addForm").classList.add("hidden");
+};
+// RENDER
+function renderBookings(list){
+  const box = document.getElementById("bookingList");
+
+  box.innerHTML = `
+    <table style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background:#334155;">
+          <th style="padding:10px;">Name</th>
+          <th>Phone</th>
+          <th>Doctor</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  `;
+
+  const tbody = document.getElementById("tableBody");
+
+  list.forEach(b => {
+    tbody.innerHTML += `
+      <tr style="text-align:center; border-bottom:1px solid #444;">
+        <td style="padding:10px;">${b.name}</td>
+        <td>${b.phone}</td>
+        <td>${b.doctor}</td>
+        <td>${b.date}</td>
+        <td>${b.time}</td>
+        <td>
+          <button onclick="deleteBooking('${b.id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+// DELETE
+window.deleteBooking = async (id) => {
+  if(confirm("Delete booking?")){
+    await deleteDoc(doc(db, "appointments", id));
+  }
+};
+
+</script>
+
+</body>
+</html>
