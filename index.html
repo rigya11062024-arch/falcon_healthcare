@@ -20,19 +20,64 @@ body{
 nav{
   display:flex;
   justify-content:space-between;
+  align-items:center;
   padding:20px 50px;
   background:rgba(255,255,255,0.05);
   backdrop-filter:blur(10px);
+  position:relative;
 }
 
-nav h2{
-  color:#22c55e;
+.menu-icon{
+  font-size:24px;
+  cursor:pointer;
 }
 
-nav a{
+/* MENU BOX */
+.menu{
+  position:absolute;
+  top:70px;
+  right:50px;
+
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
+
+  display:flex;
+  flex-direction:column;   /* 🔥 THIS MAKES IT VERTICAL */
+  gap:10px;
+
+  width:160px;
+
+  opacity:0;
+  transform:translateY(-10px);
+  pointer-events:none;
+  transition:0.3s;
+
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+.menu.active{
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:auto;
+}
+
+.menu a{
   color:#fff;
   text-decoration:none;
-  margin-left:20px;
+  padding:8px 12px;
+  border-radius:8px;
+  transition:0.3s;
+}
+
+.menu a:hover{
+  background:#22c55e;
+  color:#000;
+}
+
+/* SHOW MENU */
+.menu.active{
+  display:flex;
 }
 
 /* HERO */
@@ -113,7 +158,12 @@ footer{
 <!-- NAV -->
 <nav>
   <h2>🦅 Falcon Healthcare</h2>
-  <div>
+
+  <!-- MENU ICON -->
+  <div class="menu-icon" onclick="toggleMenu()">☰</div>
+
+  <!-- DROPDOWN MENU -->
+  <div id="menu" class="menu">
     <a href="#">Home</a>
     <a href="#doctors">Doctors</a>
     <a href="#contact">Contact</a>
@@ -180,6 +230,10 @@ footer{
 <footer>
   © 2026 Falcon Healthcare
 </footer>
-
+<script>
+function toggleMenu(){
+  document.getElementById("menu").classList.toggle("active");
+}
+</script>
 </body>
 </html>
